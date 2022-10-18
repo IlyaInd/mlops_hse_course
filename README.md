@@ -19,7 +19,7 @@
 $ curl -X PUT http://127.0.0.1:5000/data/train -d 'filename=winequality-red.csv' -d 'target_name=quality'
 
 # configure model parameters
-$ curl -X PUT http://127.0.0.1:5000/models/1 -d -d '{"alpha": 0.1, "fit_intercept": true}' 
+$ curl -X PUT http://127.0.0.1:5000/models/1 -d '{"alpha": 0.1, "fit_intercept": true}' 
 
 # inspect current model configuration
 $ curl -X GET  http://127.0.0.1:5000/models/1                                                                   
