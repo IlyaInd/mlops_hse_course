@@ -3,9 +3,12 @@ from flask_restx import Api, Resource, fields, reqparse
 from sklearn.linear_model import Ridge
 from sklearn.ensemble import RandomForestRegressor
 import pandas as pd
+import numpy as np
 import json
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_val_score
+# from marshmallow import Schema, fields
+
 
 # parser = reqparse.RequestParser()
 # parser.add_argument("username", type=str)
@@ -14,20 +17,33 @@ app = Flask(__name__)
 api = Api(app, title='API for ML models fit and predict')
 
 models = {1: Ridge(), 2: RandomForestRegressor()}
+dataset = {}
 
+
+@api.route("/models")
+class ModelList(Resource):
+    def get(self):
+        """Return all available models"""
+        return [{"model_id": model_id, "model": str(model)} for model_id, model in models.items()]
+
+
+params_fields = api.model('Hyperparameters', {'params': fields.Raw(default={"alpha": 1.0},
+                                                                   description="Hyperparameters of the model in json format")})
 @api.route("/models/<int:model_id>")
 class Model(Resource):
     @api.doc(params={'model_id': {'description': 'id of the model', 'type': int, 'default': 1}})
     # @api.expect(parser)
     def get(self, model_id):
         """Return information about the model"""
-        # model_type = request.args.get('type')
-        # model_type = parser.parse_args()
         return {'model': str(models[model_id]), 'params': models[model_id].get_params()}
 
+    # @api.doc(params={'params': {'description': 'hyperparameters of the model in json format', 'type': 'json'}})
+    @api.expect(params_fields)
     def put(self, model_id):
         """Configure model with hyperparameters passed in JSON format"""
-        params = request.get_json(force=True)
+        # params = request.get_json(force=True)
+        # params = request.form['params']
+        params = api.payload['params']
         models[model_id].set_params(**params)
         return {'model': str(models[model_id]), 'params': models[model_id].get_params()}
 
@@ -41,16 +57,38 @@ class Model(Resource):
             raise ValueError("Incorrect model type specified")
 
 
+resource_fields = api.model('Resource', {
+    'params': fields.Raw(default={"alpha": 1.0})
+})
+
+@api.route("/jsoner")
+class ParseJson(Resource):
+    @api.expect(resource_fields)
+    # @api.marshal_with(resource_fields)
+    def put(self):
+        # parser = reqparse.RequestParser()
+        # parser.add_argument('name', location='args')
+        # args = parser.parse_args()
+        payload = api.payload['params']
+        return payload
+
+
+fit_fields = api.model('Data', {'X': fields.List(fields.Float(), default=[[1], [2], [5]]),
+                                'y': fields.List(fields.Float(), default=[1, 3, 8])})
 @api.route("/models/<int:model_id>/fit")
 class Fit(Resource):
+    @api.expect(fit_fields)
     def put(self, model_id):
         """Fit model with previously passed train data"""
         # mode = request.form['mode']
-        X, y = dataset['train'].X, dataset['train'].y
+        # X, y = dataset['train'].X, dataset['train'].y
+        # X, y = api.payload.values()
+        X, y = np.array(api.payload["X"]), np.array(api.payload["y"])
         models[model_id].fit(X, y)
         rmse = mean_squared_error(y, models[model_id].predict(X)) ** 0.5
         return {"status": "Fitted on train data", "RMSE on train": round(rmse, 4)}
-
+        # return {"X_train": X, "y_train": y}
+        # return data
 
 @api.route("/models/<int:model_id>/validate")
 class Validate(Resource):
@@ -83,15 +121,16 @@ class Dataset:
     def get_data(self):
         return self.df.iloc[0].to_dict()
 
-dataset = {}
 
+params_fields = api.model('Hyperparameters', {'params': fields.Raw(default={"alpha": 1.0},
+                                                                   description="Hyperparameters of the model in json format")})
 @api.route("/data/<dataset_name>")
 class Data(Resource):
-    @api.doc(params={'filename': {'description': 'Path to file with your data in csv format',
-                                  'type': 'str', 'required': True},
-                     'target_name': {'description': 'Name of the column containing target',
-                                     'type': 'str', 'required': True}},
-             responses={200: 'Data loaded'})
+    # @api.doc(params={'filename': {'description': 'Path to file with your data in csv format',
+    #                               'type': 'str', 'required': True},
+    #                  'target_name': {'description': 'Name of the column containing target',
+    #                                  'type': 'str', 'required': True}},
+    #          responses={200: 'Data loaded'})
 
     def put(self, dataset_name):
         """Load and save your csv dataset"""
@@ -108,4 +147,4 @@ class Data(Resource):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
