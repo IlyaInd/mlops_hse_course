@@ -62,4 +62,4 @@ $ curl -X PUT http://127.0.0.1:5001/models/0 \
 ```
 
 ## License :)
-[MIT](LICENSE)
+[MIT](LICENCE)
