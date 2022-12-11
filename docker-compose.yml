@@ -13,22 +13,10 @@ services:
     ports:
       - "5432:5432"
 
-  pgadmin:
-    container_name: pgadmin4_container
-    image: dpage/pgadmin4
-    networks:
-      - my_network
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: root
-    ports:
-      - "5050:80"
-
   app:
     container_name: app
-    image: my_service
-#    restart: always
+    image: ilyaind/mlops_hse_course
+    restart: always
     networks:
       - my_network
     depends_on:
