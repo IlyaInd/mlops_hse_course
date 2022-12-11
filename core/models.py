@@ -18,10 +18,11 @@ session = db.Session()
 
 def init_models_in_db():
     """Create and write in database default versions of each available models"""
-    for i, model in enumerate(PREDEFINED_MODELS):
-        m = db.Models(i, str(model), pickle.dumps(model))
-        session.add(m)
-    session.commit()
+    if session.query(db.Models).first() is None:
+        for i, model in enumerate(PREDEFINED_MODELS):
+            m = db.Models(i, str(model), pickle.dumps(model))
+            session.add(m)
+        session.commit()
 
 model_fields = api.model('Model', {'model_type': fields.String(enum=['ridge', 'random_forest'], validate=True)})
 @api.route("/model")

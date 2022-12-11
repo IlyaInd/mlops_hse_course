@@ -1,10 +1,11 @@
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
 from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import declarative_base, sessionmaker
+import time
 
 DATABASE = {
     'drivername': 'postgresql',
-    'host': 'localhost',
+    'host': 'pg_container', #pg_container, localhost
     'port': '5432',
     'username': 'root',
     'password': 'root',
@@ -30,6 +31,8 @@ class Models(Base):
 
 
 if __name__ == '__main__':
+    time.sleep(2)  # чтобы успел запуститься postgres
+    print('=' * 20, 'CREATE TABLE MODELS', '=' * 20)
     Base.metadata.create_all(engine)
 
 

@@ -4,6 +4,8 @@ services:
   db:
     container_name: pg_container
     image: postgres
+    networks:
+      - my_network
     restart: always
     environment:
       POSTGRES_USER: root
@@ -14,6 +16,8 @@ services:
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4
+    networks:
+      - my_network
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
@@ -25,9 +29,15 @@ services:
     container_name: app
     image: my_service
 #    restart: always
+    networks:
+      - my_network
+    depends_on:
+      - db
     volumes:
       - .:/app
     ports:
       - "5001:5001"
-    depends_on:
-      - db
+
+networks:
+  my_network:
+    driver: bridge
