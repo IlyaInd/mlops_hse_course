@@ -6,14 +6,13 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.exceptions import NotFittedError
 from sqlalchemy import func
-import db
+from core import db
 import pickle
 
 app = Flask(__name__)
 api = Api(app, title='API for ML core fit and predict')
-PREDEFINED_MODELS = [Ridge(), RandomForestRegressor()]
+PREDEFINED_MODELS = [Ridge(random_state=42), RandomForestRegressor(random_state=42)]
 
-db.engine.connect()
 session = db.Session()
 
 def init_models_in_db():
@@ -121,7 +120,7 @@ class Predict(Resource):
         data = np.array(api.payload["data"])
         try:
             y_pred = model.predict(data)
-            return {"y_pred": list(y_pred)}
+            return {"y_pred": list(y_pred)}, 200
         except NotFittedError as e:
             return repr(e), 424
         except:

@@ -21,8 +21,6 @@ services:
       - my_network
     depends_on:
       - db
-    volumes:
-      - .:/app
     ports:
       - "5001:5001"
 
